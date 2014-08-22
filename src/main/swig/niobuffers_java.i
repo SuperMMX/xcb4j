@@ -30,8 +30,23 @@
 
 //bytebuffer all the things!!!
 NIO_BUFFER_TYPEMAP(void*, java.nio.ByteBuffer);
+
+
 //TODO char pointers are almost exclusively used for strings in xcb, so no need to wrap it into a bytebyffer.
-//NIO_BUFFER_TYPEMAP(char, java.nio.ByteBuffer);
+//NIO_BUFFER_TYPEMAP(char*, java.nio.ByteBuffer);
+%typemap(jni) char* strings "jobject"
+%typemap(jtype) char* strings "java.nio.ByteBuffer"
+%typemap(jstype) char* strings "java.nio.ByteBuffer"
+%typemap(javaout) char* strings {
+    return $jnicall.order(java.nio.ByteOrder.nativeOrder());
+}
+%typemap(out) char* strings {
+	//TODO every method that returns a pointer to memory as a capacity defined somewhere (or at least it should have).
+	//TODO provide a mapping for these methods and create a direct buffer with the correct capacity information.
+	//For now we provide a value that we've just sucked out of our thumb. (max signed int value).
+	$result = (*jenv)->NewDirectByteBuffer(jenv,result, 2147483647);
+}
+
 NIO_BUFFER_TYPEMAP(unsigned char*, java.nio.ByteBuffer);
 NIO_BUFFER_TYPEMAP(short*, java.nio.ByteBuffer);
 NIO_BUFFER_TYPEMAP(unsigned short*, java.nio.ByteBuffer);
